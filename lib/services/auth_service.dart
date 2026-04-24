@@ -112,17 +112,6 @@ class AuthService {
     }
   }
 
-  Future<auth.ConfirmationResult> verifyPhone(String phone) async {
-    return await _firebaseAuth.signInWithPhoneNumber(phone);
-  }
-
-  Future<void> updateProfile(Map<String, dynamic> data) async {
-    final userId = currentUserId;
-    if (userId != null) {
-      await _userRepository.updateUser(userId, data);
-    }
-  }
-
   String _getAuthErrorMessage(String code) {
     switch (code) {
       case 'user-not-found':

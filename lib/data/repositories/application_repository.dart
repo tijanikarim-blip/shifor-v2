@@ -37,21 +37,6 @@ class ApplicationRepository {
         .map((snapshot) => snapshot.docs.map((doc) => ApplicationModel.fromMap(doc.data(), doc.id)).toList());
   }
 
-  Future<List<ApplicationModel>> getApplicationsByCompany(String companyId) async {
-    final jobsSnapshot = await _firestore.collection('jobs')
-        .where('companyId', isEqualTo: companyId)
-        .get();
-    
-    final jobIds = jobsSnapshot.docs.map((doc) => doc.id).toList();
-    if (jobIds.isEmpty) return [];
-    
-    final appsSnapshot = await _appsRef
-        .where('jobId', whereIn: jobIds)
-        .orderBy('createdAt', descending: true)
-        .get();
-    return appsSnapshot.docs.map((doc) => ApplicationModel.fromMap(doc.data(), doc.id)).toList();
-  }
-
   Future<String> createApplication(Map<String, dynamic> data) async {
     final docRef = await _appsRef.add(data);
     return docRef.id;

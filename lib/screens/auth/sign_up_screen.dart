@@ -19,7 +19,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
   String _selectedRole = '';
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -37,9 +36,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedRole.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select your role')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select your role')));
       return;
     }
 
@@ -58,10 +55,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       Navigator.of(context).pushReplacementNamed('/verification');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.error ?? 'Sign up failed'),
-          backgroundColor: AppColors.error,
-        ),
+        SnackBar(content: Text(authProvider.error ?? 'Sign up failed'), backgroundColor: AppColors.error),
       );
     }
   }
@@ -80,133 +74,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
               children: [
                 const Icon(Icons.directions_car, size: 60, color: AppColors.primary),
                 const SizedBox(height: 16),
-                const Text(
-                  'Join the driver recruitment platform',
-                  style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-                  textAlign: TextAlign.center,
-                ),
+                const Text('Join the driver recruitment platform', style: TextStyle(fontSize: 16, color: AppColors.textSecondary), textAlign: TextAlign.center),
                 const SizedBox(height: 32),
                 const Text('Select Role', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _RoleCard(
-                      title: 'Driver',
-                      icon: Icons.drive_eta,
-                      isSelected: _selectedRole == AppConstants.roleDriver,
-                      onTap: () => setState(() => _selectedRole = AppConstants.roleDriver),
-                    ),
-                    const SizedBox(width: 8),
-                    _RoleCard(
-                      title: 'Company',
-                      icon: Icons.business,
-                      isSelected: _selectedRole == AppConstants.roleCompany,
-                      onTap: () => setState(() => _selectedRole = AppConstants.roleCompany),
-                    ),
-                    const SizedBox(width: 8),
-                    _RoleCard(
-                      title: 'Agency',
-                      icon: Icons.people,
-                      isSelected: _selectedRole == AppConstants.roleAgency,
-                      onTap: () => setState(() => _selectedRole = AppConstants.roleAgency),
-                    ),
-                  ],
-                ),
+                Row(children: [
+                  _RoleCard(title: 'Driver', icon: Icons.drive_eta, isSelected: _selectedRole == AppConstants.roleDriver, onTap: () => setState(() => _selectedRole = AppConstants.roleDriver)),
+                  const SizedBox(width: 8),
+                  _RoleCard(title: 'Company', icon: Icons.business, isSelected: _selectedRole == AppConstants.roleCompany, onTap: () => setState(() => _selectedRole = AppConstants.roleCompany)),
+                  const SizedBox(width: 8),
+                  _RoleCard(title: 'Agency', icon: Icons.people, isSelected: _selectedRole == AppConstants.roleAgency, onTap: () => setState(() => _selectedRole = AppConstants.roleAgency)),
+                ]),
                 const SizedBox(height: 24),
-                TextFormField(
-                  controller: _nameController,
-                  validator: Validators.validateName,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    prefixIcon: Icon(Icons.person_outlined),
-                  ),
-                ),
+                TextFormField(controller: _nameController, validator: Validators.validateName, decoration: const InputDecoration(labelText: 'Full Name', prefixIcon: Icon(Icons.person_outlined))),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: Validators.validateEmail,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
-                ),
+                TextFormField(controller: _emailController, keyboardType: TextInputType.emailAddress, validator: Validators.validateEmail, decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined))),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  validator: Validators.validatePhone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number',
-                    prefixIcon: Icon(Icons.phone_outlined),
-                  ),
-                ),
+                TextFormField(controller: _phoneController, keyboardType: TextInputType.phone, validator: Validators.validatePhone, decoration: const InputDecoration(labelText: 'Phone Number', prefixIcon: Icon(Icons.phone_outlined))),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  validator: Validators.validatePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outlined),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-                ),
+                TextFormField(controller: _passwordController, obscureText: _obscurePassword, validator: Validators.validatePassword, decoration: InputDecoration(labelText: 'Password', prefixIcon: const Icon(Icons.lock_outlined), suffixIcon: IconButton(icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined), onPressed: () => setState(() => _obscurePassword = !_obscurePassword)))),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  validator: (value) {
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return Validators.validatePassword(value);
-                  },
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    prefixIcon: const Icon(Icons.lock_outlined),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
-                    ),
-                  ),
-                ),
+                TextFormField(controller: _confirmPasswordController, obscureText: _obscureConfirmPassword, validator: (v) => v != _passwordController.text ? 'Passwords do not match' : Validators.validatePassword(v), decoration: InputDecoration(labelText: 'Confirm Password', prefixIcon: const Icon(Icons.lock_outlined), suffixIcon: IconButton(icon: Icon(_obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined), onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword)))),
                 const SizedBox(height: 24),
-                Consumer<AuthProvider>(
-                  builder: (context, auth, _) {
-                    return ElevatedButton(
-                      onPressed: auth.isLoading ? null : _signUp,
-                      child: auth.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Create Account'),
-                    );
-                  },
-                ),
+                Consumer<AuthProvider>(builder: (context, auth, _) => ElevatedButton(onPressed: auth.isLoading ? null : _signUp, child: auth.isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create Account'))),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Already have an account?'),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Sign In'),
-                    ),
-                  ],
-                ),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('Already have an account?'), TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Sign In'))]),
               ],
             ),
           ),
@@ -222,12 +114,7 @@ class _RoleCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _RoleCard({
-    required this.title,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _RoleCard({required this.title, required this.icon, required this.isSelected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -239,25 +126,13 @@ class _RoleCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primary : Colors.grey[100],
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? AppColors.primary : Colors.grey[300]!,
-              width: 2,
-            ),
+            border: Border.all(color: isSelected ? AppColors.primary : Colors.grey[300]!, width: 2),
           ),
-          child: Column(
-            children: [
-              Icon(icon, size: 28, color: isSelected ? Colors.white : Colors.grey[700]),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : Colors.grey[700],
-                ),
-              ),
-            ],
-          ),
+          child: Column(children: [
+            Icon(icon, size: 28, color: isSelected ? Colors.white : Colors.grey[700]),
+            const SizedBox(height: 4),
+            Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isSelected ? Colors.white : Colors.grey[700])),
+          ]),
         ),
       ),
     );

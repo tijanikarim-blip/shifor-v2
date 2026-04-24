@@ -46,9 +46,7 @@ class JobModel {
       description: map['description'],
       requirements: List<String>.from(map['requirements'] ?? []),
       isActive: map['isActive'] ?? true,
-      createdAt: map['createdAt'] != null 
-          ? DateTime.parse(map['createdAt']) 
-          : DateTime.now(),
+      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
     );
   }
 
@@ -68,26 +66,5 @@ class JobModel {
       'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
     };
-  }
-
-  JobModel copyWith({
-    bool? isActive,
-  }) {
-    return JobModel(
-      id: id,
-      companyId: companyId,
-      companyName: companyName,
-      companyLogoUrl: companyLogoUrl,
-      title: title,
-      country: country,
-      salary: salary,
-      vehicleType: vehicleType,
-      contractDuration: contractDuration,
-      visaSponsorship: visaSponsorship,
-      description: description,
-      requirements: requirements,
-      isActive: isActive ?? this.isActive,
-      createdAt: createdAt,
-    );
   }
 }

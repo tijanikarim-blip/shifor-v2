@@ -28,18 +28,4 @@ class Validators {
     if (value == null || value.isEmpty) return '$fieldName is required';
     return null;
   }
-
-  static String? validateSalary(String? value) {
-    if (value == null || value.isEmpty) return 'Salary is required';
-    final salary = double.tryParse(value);
-    if (salary == null || salary <= 0) return 'Please enter a valid salary';
-    return null;
-  }
-
-  static String? validateExperience(String? value) {
-    if (value == null || value.isEmpty) return 'Experience is required';
-    final exp = int.tryParse(value);
-    if (exp == null || exp < 0) return 'Please enter valid years';
-    return null;
-  }
 }

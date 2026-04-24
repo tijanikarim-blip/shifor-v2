@@ -32,9 +32,7 @@ class LocationService {
         return LocationResult.failure('Location permission permanently denied');
       }
 
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
       return LocationResult.success(position);
     } catch (e) {
       return LocationResult.failure('Failed to get location: $e');
@@ -52,9 +50,5 @@ class LocationService {
     } catch (e) {
       return null;
     }
-  }
-
-  Future<void> updateDriverLocation(String driverId, double lat, double lng) async {
-    // This would update Firestore - implemented in repository
   }
 }

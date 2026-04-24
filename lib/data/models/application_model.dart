@@ -3,7 +3,7 @@ class ApplicationModel {
   final String jobId;
   final String driverId;
   final String driverName;
-  final String driverPhotoUrl;
+  final String? driverPhotoUrl;
   final String status;
   final String? coverLetter;
   final DateTime createdAt;
@@ -14,7 +14,7 @@ class ApplicationModel {
     required this.jobId,
     required this.driverId,
     required this.driverName,
-    this.driverPhotoUrl = '',
+    this.driverPhotoUrl,
     this.status = 'pending',
     this.coverLetter,
     required this.createdAt,
@@ -27,15 +27,11 @@ class ApplicationModel {
       jobId: map['jobId'] ?? '',
       driverId: map['driverId'] ?? '',
       driverName: map['driverName'] ?? '',
-      driverPhotoUrl: map['driverPhotoUrl'] ?? '',
+      driverPhotoUrl: map['driverPhotoUrl'],
       status: map['status'] ?? 'pending',
       coverLetter: map['coverLetter'],
-      createdAt: map['createdAt'] != null 
-          ? DateTime.parse(map['createdAt']) 
-          : DateTime.now(),
-      updatedAt: map['updatedAt'] != null 
-          ? DateTime.parse(map['updatedAt']) 
-          : null,
+      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
+      updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : null,
     );
   }
 

@@ -36,9 +36,7 @@ class UserModel {
       isEmailVerified: map['isEmailVerified'] ?? false,
       isPhoneVerified: map['isPhoneVerified'] ?? false,
       profileCompleted: map['profileCompleted'] ?? false,
-      createdAt: map['createdAt'] != null 
-          ? DateTime.parse(map['createdAt']) 
-          : DateTime.now(),
+      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
       profileImageUrl: map['profileImageUrl'],
     );
   }
@@ -85,5 +83,6 @@ class UserModel {
   }
 
   bool get isFullyVerified => isEmailVerified && isPhoneVerified;
-  bool get needsProfileCompletion => !profileCompleted;
+  bool get isDriver => role == 'driver';
+  bool get isCompany => role == 'company';
 }

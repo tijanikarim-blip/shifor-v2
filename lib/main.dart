@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 
+import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'data/repositories/user_repository.dart';
@@ -29,7 +30,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     debugPrint('Firebase init failed: $e');
   }
@@ -76,7 +79,9 @@ class ShiforApp extends StatelessWidget {
           '/profile-completion': (_) => const ProfileCompletionScreen(),
           '/home': (_) => const HomeScreen(),
           '/jobs': (_) => const JobsScreen(),
-          '/job-details': (context) => JobDetailsScreen(jobId: ModalRoute.of(context)!.settings.arguments as String),
+          '/job-details': (context) => JobDetailsScreen(
+            jobId: ModalRoute.of(context)!.settings.arguments as String,
+          ),
           '/post-job': (_) => const PostJobScreen(),
           '/applications': (_) => const ApplicationsScreen(),
           '/messages': (_) => const MessagesScreen(),

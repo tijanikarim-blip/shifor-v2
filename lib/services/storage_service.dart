@@ -34,16 +34,4 @@ class StorageService {
       await _storage.refFromURL(url).delete();
     } catch (_) {}
   }
-
-  Future<void> deleteProfileImage(String userId) async {
-    try {
-      await _storage.ref().child('profiles').child('$userId.jpg').delete();
-    } catch (_) {}
-  }
-
-  Future<void> deleteLicenseImage(String userId) async {
-    try {
-      await _storage.ref().child('licenses').child('$userId.jpg').delete();
-    } catch (_) {}
-  }
 }

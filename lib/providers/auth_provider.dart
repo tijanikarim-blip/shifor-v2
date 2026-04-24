@@ -11,14 +11,12 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.unknown;
   bool _isLoading = false;
   String? _error;
-  bool _emailVerified = false;
 
   UserModel? get user => _user;
   AuthStatus get status => _status;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
-  bool get emailVerified => _emailVerified;
 
   AuthProvider() {
     _checkAuthState();
@@ -29,7 +27,6 @@ class AuthProvider extends ChangeNotifier {
       _user = user;
       if (user != null) {
         _status = AuthStatus.authenticated;
-        _emailVerified = true; // Would check from Firebase
       } else {
         _status = AuthStatus.unauthenticated;
       }
@@ -93,13 +90,6 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> sendVerificationEmail() async {
     await _authService.sendEmailVerification();
-  }
-
-  Future<void> refreshUser() async {
-    final userId = _authService.currentUserId;
-    if (userId != null) {
-      _user = _authService.currentUser;
-    }
   }
 
   void _setLoading(bool value) {
