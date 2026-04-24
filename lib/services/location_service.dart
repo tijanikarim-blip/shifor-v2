@@ -1,44 +1,52 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../core/constants/app_constants.dart';
+
+class LocationResult {
+  final Position? data;
+  final String? error;
+  final bool isSuccess;
+
+  LocationResult._({this.data, this.error, required this.isSuccess});
+
+  factory LocationResult.success(Position data) => LocationResult._(data: data, isSuccess: true);
+  factory LocationResult.failure(String error) => LocationResult._(error: error, isSuccess: false);
+}
 
 class LocationService {
-  Future<bool> checkPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return false;
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return false;
-    }
-
-    if (permission == LocationPermission.deniedForever) return false;
-    return true;
-  }
-
-  Future<Position?> getCurrentPosition() async {
+  Future<LocationResult> getCurrentLocation() async {
     try {
-      final hasPermission = await checkPermission();
-      if (!hasPermission) return null;
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return LocationResult.failure('Location services are disabled');
+      }
 
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return LocationResult.failure('Location permission denied');
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        return LocationResult.failure('Location permission permanently denied');
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
       );
+      return LocationResult.success(position);
     } catch (e) {
-      return null;
+      return LocationResult.failure('Failed to get location: $e');
     }
   }
 
-  Future<String?> getAddressFromCoordinates(double lat, double lng) async {
+  Future<String?> getCityFromCoordinates(double lat, double lng) async {
     try {
       final placemarks = await placemarkFromCoordinates(lat, lng);
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
-        return '${place.street}, ${place.locality}, ${place.administrativeArea}';
+        return place.locality ?? place.administrativeArea ?? place.country;
       }
       return null;
     } catch (e) {
@@ -46,46 +54,7 @@ class LocationService {
     }
   }
 
-  Future<List<Location>> getCoordinatesFromAddress(String address) async {
-    try {
-      return await locationFromAddress(address);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  Future<void> updateDriverLocation(
-    String driverId,
-    double lat,
-    double lng,
-    String? address,
-  ) async {
-    await FirebaseFirestore.instance
-        .collection(AppConstants.driversCollection)
-        .doc(driverId)
-        .update({
-      'latitude': lat,
-      'longitude': lng,
-      'locationAddress': address,
-      'updatedAt': Timestamp.fromDate(DateTime.now()),
-    });
-  }
-
-  double calculateDistance(
-    double startLat,
-    double startLng,
-    double endLat,
-    double endLng,
-  ) {
-    return Geolocator.distanceBetween(startLat, startLng, endLat, endLng);
-  }
-
-  Stream<Position> getPositionStream() {
-    return Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
-    );
+  Future<void> updateDriverLocation(String driverId, double lat, double lng) async {
+    // This would update Firestore - implemented in repository
   }
 }

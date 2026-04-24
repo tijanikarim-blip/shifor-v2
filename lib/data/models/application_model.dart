@@ -1,107 +1,54 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-enum ApplicationStatus { pending, accepted, rejected, cancelled }
-
 class ApplicationModel {
   final String id;
   final String jobId;
   final String driverId;
-  final String companyId;
-  final String? driverName;
-  final String? driverPhotoUrl;
-  final String? jobTitle;
-  final String? companyName;
-  final String? message;
+  final String driverName;
+  final String driverPhotoUrl;
   final String status;
-  final DateTime appliedAt;
-  final DateTime? reviewedAt;
+  final String? coverLetter;
+  final DateTime createdAt;
   final DateTime? updatedAt;
 
   ApplicationModel({
     required this.id,
     required this.jobId,
     required this.driverId,
-    required this.companyId,
-    this.driverName,
-    this.driverPhotoUrl,
-    this.jobTitle,
-    this.companyName,
-    this.message,
+    required this.driverName,
+    this.driverPhotoUrl = '',
     this.status = 'pending',
-    required this.appliedAt,
-    this.reviewedAt,
+    this.coverLetter,
+    required this.createdAt,
     this.updatedAt,
   });
 
-  factory ApplicationModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory ApplicationModel.fromMap(Map<String, dynamic> map, String id) {
     return ApplicationModel(
-      id: doc.id,
-      jobId: data['jobId'] ?? '',
-      driverId: data['driverId'] ?? '',
-      companyId: data['companyId'] ?? '',
-      driverName: data['driverName'],
-      driverPhotoUrl: data['driverPhotoUrl'],
-      jobTitle: data['jobTitle'],
-      companyName: data['companyName'],
-      message: data['message'],
-      status: data['status'] ?? 'pending',
-      appliedAt: (data['appliedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      reviewedAt: (data['reviewedAt'] as Timestamp?)?.toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      id: id,
+      jobId: map['jobId'] ?? '',
+      driverId: map['driverId'] ?? '',
+      driverName: map['driverName'] ?? '',
+      driverPhotoUrl: map['driverPhotoUrl'] ?? '',
+      status: map['status'] ?? 'pending',
+      coverLetter: map['coverLetter'],
+      createdAt: map['createdAt'] != null 
+          ? DateTime.parse(map['createdAt']) 
+          : DateTime.now(),
+      updatedAt: map['updatedAt'] != null 
+          ? DateTime.parse(map['updatedAt']) 
+          : null,
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toMap() {
     return {
       'jobId': jobId,
       'driverId': driverId,
-      'companyId': companyId,
       'driverName': driverName,
       'driverPhotoUrl': driverPhotoUrl,
-      'jobTitle': jobTitle,
-      'companyName': companyName,
-      'message': message,
       'status': status,
-      'appliedAt': Timestamp.fromDate(appliedAt),
-      'reviewedAt': reviewedAt != null ? Timestamp.fromDate(reviewedAt!) : null,
-      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+      'coverLetter': coverLetter,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
     };
   }
-
-  ApplicationModel copyWith({
-    String? id,
-    String? jobId,
-    String? driverId,
-    String? companyId,
-    String? driverName,
-    String? driverPhotoUrl,
-    String? jobTitle,
-    String? companyName,
-    String? message,
-    String? status,
-    DateTime? appliedAt,
-    DateTime? reviewedAt,
-    DateTime? updatedAt,
-  }) {
-    return ApplicationModel(
-      id: id ?? this.id,
-      jobId: jobId ?? this.jobId,
-      driverId: driverId ?? this.driverId,
-      companyId: companyId ?? this.companyId,
-      driverName: driverName ?? this.driverName,
-      driverPhotoUrl: driverPhotoUrl ?? this.driverPhotoUrl,
-      jobTitle: jobTitle ?? this.jobTitle,
-      companyName: companyName ?? this.companyName,
-      message: message ?? this.message,
-      status: status ?? this.status,
-      appliedAt: appliedAt ?? this.appliedAt,
-      reviewedAt: reviewedAt ?? this.reviewedAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  bool get isPending => status == 'pending';
-  bool get isAccepted => status == 'accepted';
-  bool get isRejected => status == 'rejected';
 }

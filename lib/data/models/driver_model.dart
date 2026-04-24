@@ -1,151 +1,117 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class DriverModel {
   final String id;
-  final String userId;
-  final String? firstName;
-  final String? lastName;
-  final String? phone;
-  final String? photoUrl;
-  final String? licenseNumber;
-  final String? licensePhotoUrl;
-  final String? vehicleType;
-  final String? vehiclePlate;
-  final String? address;
+  final String driverId;
+  final List<String> licenses;
+  final int experienceYears;
+  final List<String> languages;
+  final List<String> countriesWorked;
+  final bool isAvailable;
+  final double rating;
   final double? latitude;
   final double? longitude;
-  final String? locationAddress;
-  final bool isAvailable;
-  final bool isVerified;
-  final bool isOnline;
-  final int rating;
-  final int totalJobs;
+  final String? currentCity;
+  final String? profileImageUrl;
+  final String? licenseImageUrl;
+  final List<String> attestationUrls;
+  final String verificationStatus;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
   DriverModel({
     required this.id,
-    required this.userId,
-    this.firstName,
-    this.lastName,
-    this.phone,
-    this.photoUrl,
-    this.licenseNumber,
-    this.licensePhotoUrl,
-    this.vehicleType,
-    this.vehiclePlate,
-    this.address,
+    required this.driverId,
+    this.licenses = const [],
+    this.experienceYears = 0,
+    this.languages = const [],
+    this.countriesWorked = const [],
+    this.isAvailable = false,
+    this.rating = 0,
     this.latitude,
     this.longitude,
-    this.locationAddress,
-    this.isAvailable = false,
-    this.isVerified = false,
-    this.isOnline = false,
-    this.rating = 0,
-    this.totalJobs = 0,
+    this.currentCity,
+    this.profileImageUrl,
+    this.licenseImageUrl,
+    this.attestationUrls = const [],
+    this.verificationStatus = 'pending',
     required this.createdAt,
     this.updatedAt,
   });
 
-  factory DriverModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory DriverModel.fromMap(Map<String, dynamic> map, String id) {
     return DriverModel(
-      id: doc.id,
-      userId: data['userId'] ?? '',
-      firstName: data['firstName'],
-      lastName: data['lastName'],
-      phone: data['phone'],
-      photoUrl: data['photoUrl'],
-      licenseNumber: data['licenseNumber'],
-      licensePhotoUrl: data['licensePhotoUrl'],
-      vehicleType: data['vehicleType'],
-      vehiclePlate: data['vehiclePlate'],
-      address: data['address'],
-      latitude: (data['latitude'] as num?)?.toDouble(),
-      longitude: (data['longitude'] as num?)?.toDouble(),
-      locationAddress: data['locationAddress'],
-      isAvailable: data['isAvailable'] ?? false,
-      isVerified: data['isVerified'] ?? false,
-      isOnline: data['isOnline'] ?? false,
-      rating: data['rating'] ?? 0,
-      totalJobs: data['totalJobs'] ?? 0,
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      id: id,
+      driverId: map['driverId'] ?? '',
+      licenses: List<String>.from(map['licenses'] ?? []),
+      experienceYears: map['experienceYears'] ?? 0,
+      languages: List<String>.from(map['languages'] ?? []),
+      countriesWorked: List<String>.from(map['countriesWorked'] ?? []),
+      isAvailable: map['isAvailable'] ?? false,
+      rating: (map['rating'] as num?)?.toDouble() ?? 0,
+      latitude: map['latitude']?.toDouble(),
+      longitude: map['longitude']?.toDouble(),
+      currentCity: map['currentCity'],
+      profileImageUrl: map['profileImageUrl'],
+      licenseImageUrl: map['licenseImageUrl'],
+      attestationUrls: List<String>.from(map['attestationUrls'] ?? []),
+      verificationStatus: map['verificationStatus'] ?? 'pending',
+      createdAt: map['createdAt'] != null 
+          ? DateTime.parse(map['createdAt']) 
+          : DateTime.now(),
+      updatedAt: map['updatedAt'] != null 
+          ? DateTime.parse(map['updatedAt']) 
+          : null,
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toMap() {
     return {
-      'userId': userId,
-      'firstName': firstName,
-      'lastName': lastName,
-      'phone': phone,
-      'photoUrl': photoUrl,
-      'licenseNumber': licenseNumber,
-      'licensePhotoUrl': licensePhotoUrl,
-      'vehicleType': vehicleType,
-      'vehiclePlate': vehiclePlate,
-      'address': address,
+      'driverId': driverId,
+      'licenses': licenses,
+      'experienceYears': experienceYears,
+      'languages': languages,
+      'countriesWorked': countriesWorked,
+      'isAvailable': isAvailable,
+      'rating': rating,
       'latitude': latitude,
       'longitude': longitude,
-      'locationAddress': locationAddress,
-      'isAvailable': isAvailable,
-      'isVerified': isVerified,
-      'isOnline': isOnline,
-      'rating': rating,
-      'totalJobs': totalJobs,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+      'currentCity': currentCity,
+      'profileImageUrl': profileImageUrl,
+      'licenseImageUrl': licenseImageUrl,
+      'attestationUrls': attestationUrls,
+      'verificationStatus': verificationStatus,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
     };
   }
 
   DriverModel copyWith({
-    String? id,
-    String? userId,
-    String? firstName,
-    String? lastName,
-    String? phone,
-    String? photoUrl,
-    String? licenseNumber,
-    String? licensePhotoUrl,
-    String? vehicleType,
-    String? vehiclePlate,
-    String? address,
+    bool? isAvailable,
     double? latitude,
     double? longitude,
-    String? locationAddress,
-    bool? isAvailable,
-    bool? isVerified,
-    bool? isOnline,
-    int? rating,
-    int? totalJobs,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    String? currentCity,
+    String? profileImageUrl,
+    String? licenseImageUrl,
+    List<String>? attestationUrls,
+    String? verificationStatus,
   }) {
     return DriverModel(
-      id: id ?? this.id,
-      userId: userId ?? this.userId,
-      firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
-      phone: phone ?? this.phone,
-      photoUrl: photoUrl ?? this.photoUrl,
-      licenseNumber: licenseNumber ?? this.licenseNumber,
-      licensePhotoUrl: licensePhotoUrl ?? this.licensePhotoUrl,
-      vehicleType: vehicleType ?? this.vehicleType,
-      vehiclePlate: vehiclePlate ?? this.vehiclePlate,
-      address: address ?? this.address,
+      id: id,
+      driverId: driverId,
+      licenses: licenses,
+      experienceYears: experienceYears,
+      languages: languages,
+      countriesWorked: countriesWorked,
+      isAvailable: isAvailable ?? this.isAvailable,
+      rating: rating,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
-      locationAddress: locationAddress ?? this.locationAddress,
-      isAvailable: isAvailable ?? this.isAvailable,
-      isVerified: isVerified ?? this.isVerified,
-      isOnline: isOnline ?? this.isOnline,
-      rating: rating ?? this.rating,
-      totalJobs: totalJobs ?? this.totalJobs,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      currentCity: currentCity ?? this.currentCity,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      licenseImageUrl: licenseImageUrl ?? this.licenseImageUrl,
+      attestationUrls: attestationUrls ?? this.attestationUrls,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
+      createdAt: createdAt,
+      updatedAt: DateTime.now(),
     );
   }
-
-  String get fullName => '${firstName ?? ''} ${lastName ?? ''}'.trim();
 }

@@ -1,60 +1,45 @@
-import 'package:intl/intl.dart';
-
 class Validators {
-  static String? email(String? value) {
+  static String? validateEmail(String? value) {
     if (value == null || value.isEmpty) return 'Email is required';
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value)) return 'Invalid email';
+    if (!emailRegex.hasMatch(value)) return 'Please enter a valid email';
     return null;
   }
 
-  static String? password(String? value) {
+  static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) return 'Password is required';
     if (value.length < 6) return 'Password must be at least 6 characters';
     return null;
   }
 
-  static String? phone(String? value) {
+  static String? validatePhone(String? value) {
     if (value == null || value.isEmpty) return 'Phone is required';
-    final phoneRegex = RegExp(r'^\+?[1-9]\d{6,14}$');
-    if (!phoneRegex.hasMatch(value.replaceAll(RegExp(r'[\s-]'), ''))) {
-      return 'Invalid phone number';
-    }
+    if (value.length < 8) return 'Please enter a valid phone number';
     return null;
   }
 
-  static String? required(String? value, [String fieldName = 'Field']) {
+  static String? validateName(String? value) {
+    if (value == null || value.isEmpty) return 'Name is required';
+    if (value.length < 2) return 'Name must be at least 2 characters';
+    return null;
+  }
+
+  static String? validateRequired(String? value, String fieldName) {
     if (value == null || value.isEmpty) return '$fieldName is required';
     return null;
   }
-}
 
-class Formatters {
-  static String formatDate(DateTime date) {
-    return DateFormat('MMM dd, yyyy').format(date);
+  static String? validateSalary(String? value) {
+    if (value == null || value.isEmpty) return 'Salary is required';
+    final salary = double.tryParse(value);
+    if (salary == null || salary <= 0) return 'Please enter a valid salary';
+    return null;
   }
 
-  static String formatDateTime(DateTime date) {
-    return DateFormat('MMM dd, yyyy HH:mm').format(date);
-  }
-
-  static String formatCurrency(double amount) {
-    return NumberFormat.currency(symbol: '\$').format(amount);
-  }
-}
-
-class Utils {
-  static String getInitials(String name) {
-    if (name.isEmpty) return '';
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return name[0].toUpperCase();
-  }
-
-  static String truncate(String text, int maxLength) {
-    if (text.length <= maxLength) return text;
-    return '${text.substring(0, maxLength)}...';
+  static String? validateExperience(String? value) {
+    if (value == null || value.isEmpty) return 'Experience is required';
+    final exp = int.tryParse(value);
+    if (exp == null || exp < 0) return 'Please enter valid years';
+    return null;
   }
 }

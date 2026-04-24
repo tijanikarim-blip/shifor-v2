@@ -1,149 +1,110 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../services/auth_service.dart';
 import '../../data/models/user_model.dart';
-import '../../data/models/driver_model.dart';
-import '../../data/models/company_model.dart';
-import '../../core/constants/app_constants.dart';
+import '../../services/auth_service.dart';
+
+enum AuthStatus { unknown, authenticated, unauthenticated }
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   
-  User? _user;
-  UserModel? _userModel;
-  DriverModel? _driverModel;
-  CompanyModel? _companyModel;
+  UserModel? _user;
+  AuthStatus _status = AuthStatus.unknown;
   bool _isLoading = false;
   String? _error;
+  bool _emailVerified = false;
 
-  User? get user => _user;
-  UserModel? get userModel => _userModel;
-  DriverModel? get driverModel => _driverModel;
-  CompanyModel? get companyModel => _companyModel;
+  UserModel? get user => _user;
+  AuthStatus get status => _status;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  bool get isAuthenticated => _user != null;
-  bool get isDriver => _userModel?.role == AppConstants.roleDriver;
-  bool get isCompany => _userModel?.role == AppConstants.roleCompany || _userModel?.role == AppConstants.roleAgency;
-  bool get isEmailVerified => _user?.emailVerified ?? false;
+  bool get isAuthenticated => _status == AuthStatus.authenticated;
+  bool get emailVerified => _emailVerified;
 
   AuthProvider() {
-    _init();
+    _checkAuthState();
   }
 
-  Future<void> _init() async {
-    _user = _authService.currentUser;
-    if (_user != null) {
-      await loadUserData();
-    }
-    notifyListeners();
-  }
-
-  Future<void> signIn(String email, String password) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      _userModel = await _authService.signInWithEmail(email, password);
-      _user = _authService.currentUser;
-      if (_userModel != null) {
-        await loadProfileData();
+  void _checkAuthState() {
+    _authService.authStateChanges.listen((UserModel? user) {
+      _user = user;
+      if (user != null) {
+        _status = AuthStatus.authenticated;
+        _emailVerified = true; // Would check from Firebase
+      } else {
+        _status = AuthStatus.unauthenticated;
       }
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _isLoading = false;
       notifyListeners();
-    }
+    });
   }
 
-  Future<void> signUp(String email, String password, String role) async {
-    _isLoading = true;
+  Future<bool> signIn(String email, String password) async {
+    _setLoading(true);
     _error = null;
-    notifyListeners();
-
-    try {
-      _userModel = await _authService.signUpWithEmail(email, password, role);
-      _user = _authService.currentUser;
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+    
+    final result = await _authService.signIn(email, password);
+    
+    if (result.isSuccess) {
+      _user = result.data;
+      _status = AuthStatus.authenticated;
+    } else {
+      _error = result.error;
     }
+    
+    _setLoading(false);
+    return result.isSuccess;
+  }
+
+  Future<bool> signUp({
+    required String email,
+    required String password,
+    required String name,
+    required String phone,
+    required String role,
+  }) async {
+    _setLoading(true);
+    _error = null;
+    
+    final result = await _authService.signUp(
+      email: email,
+      password: password,
+      name: name,
+      phone: phone,
+      role: role,
+    );
+    
+    if (result.isSuccess) {
+      _user = result.data;
+      _status = AuthStatus.authenticated;
+    } else {
+      _error = result.error;
+    }
+    
+    _setLoading(false);
+    return result.isSuccess;
   }
 
   Future<void> signOut() async {
-    _isLoading = true;
-    notifyListeners();
-
+    _setLoading(true);
     await _authService.signOut();
     _user = null;
-    _userModel = null;
-    _driverModel = null;
-    _companyModel = null;
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  Future<void> loadUserData() async {
-    if (_user == null) return;
-    _userModel = await _authService.getUserData(_user!.uid);
-    await loadProfileData();
-    notifyListeners();
-  }
-
-  Future<void> loadProfileData() async {
-    if (_userModel == null) return;
-    
-    if (_userModel!.role == AppConstants.roleDriver) {
-      final doc = await FirebaseFirestore.instance
-          .collection(AppConstants.driversCollection)
-          .doc(_user!.uid)
-          .get();
-      if (doc.exists) {
-        _driverModel = DriverModel.fromFirestore(doc);
-      }
-    } else {
-      final doc = await FirebaseFirestore.instance
-          .collection(AppConstants.companiesCollection)
-          .doc(_user!.uid)
-          .get();
-      if (doc.exists) {
-        _companyModel = CompanyModel.fromFirestore(doc);
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> updateDriverProfile(Map<String, dynamic> data) async {
-    if (_user == null) return;
-    await FirebaseFirestore.instance
-        .collection(AppConstants.driversCollection)
-        .doc(_user!.uid)
-        .update(data);
-    await loadProfileData();
-  }
-
-  Future<void> updateCompanyProfile(Map<String, dynamic> data) async {
-    if (_user == null) return;
-    await FirebaseFirestore.instance
-        .collection(AppConstants.companiesCollection)
-        .doc(_user!.uid)
-        .update(data);
-    await loadProfileData();
-  }
-
-  void toggleAvailability() async {
-    if (_driverModel == null) return;
-    await updateDriverProfile({'isAvailable': !_driverModel!.isAvailable});
+    _status = AuthStatus.unauthenticated;
+    _setLoading(false);
   }
 
   Future<void> sendVerificationEmail() async {
-    await _user?.sendEmailVerification();
+    await _authService.sendEmailVerification();
+  }
+
+  Future<void> refreshUser() async {
+    final userId = _authService.currentUserId;
+    if (userId != null) {
+      _user = _authService.currentUser;
+    }
+  }
+
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
   }
 
   void clearError() {

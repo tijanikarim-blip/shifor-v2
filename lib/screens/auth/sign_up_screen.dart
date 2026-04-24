@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/utils/validators.dart';
-import 'verification_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -14,16 +14,21 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  String _selectedRole = AppConstants.roleDriver;
+  
+  String _selectedRole = '';
   bool _obscurePassword = true;
-  bool _obscureConfirm = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -31,26 +36,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
-    
+    if (_selectedRole.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your role')),
+      );
+      return;
+    }
+
     final authProvider = context.read<AuthProvider>();
-    await authProvider.signUp(
-      _emailController.text.trim(),
-      _passwordController.text,
-      _selectedRole,
+    final success = await authProvider.signUp(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      role: _selectedRole,
     );
-    
-    if (authProvider.error != null && mounted) {
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.of(context).pushReplacementNamed('/verification');
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error!),
-          backgroundColor: Colors.red,
+          content: Text(authProvider.error ?? 'Sign up failed'),
+          backgroundColor: AppColors.error,
         ),
-      );
-    } else if (authProvider.isAuthenticated) {
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const VerificationScreen()),
       );
     }
   }
@@ -58,9 +69,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-      ),
+      appBar: AppBar(title: const Text('Create Account')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -69,78 +78,107 @@ class _SignUpScreenState extends State<SignUpScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 24),
-                Text(
-                  'Join as a',
-                  style: Theme.of(context).textTheme.titleLarge,
+                const Icon(Icons.directions_car, size: 60, color: AppColors.primary),
+                const SizedBox(height: 16),
+                const Text(
+                  'Join the driver recruitment platform',
+                  style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
+                const Text('Select Role', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(
-                      child: _RoleCard(
-                        title: 'Driver',
-                        icon: Icons.directions_car,
-                        isSelected: _selectedRole == AppConstants.roleDriver,
-                        onTap: () => setState(() => _selectedRole = AppConstants.roleDriver),
-                      ),
+                    _RoleCard(
+                      title: 'Driver',
+                      icon: Icons.drive_eta,
+                      isSelected: _selectedRole == AppConstants.roleDriver,
+                      onTap: () => setState(() => _selectedRole = AppConstants.roleDriver),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _RoleCard(
-                        title: 'Company',
-                        icon: Icons.business,
-                        isSelected: _selectedRole == AppConstants.roleCompany,
-                        onTap: () => setState(() => _selectedRole = AppConstants.roleCompany),
-                      ),
+                    const SizedBox(width: 8),
+                    _RoleCard(
+                      title: 'Company',
+                      icon: Icons.business,
+                      isSelected: _selectedRole == AppConstants.roleCompany,
+                      onTap: () => setState(() => _selectedRole = AppConstants.roleCompany),
+                    ),
+                    const SizedBox(width: 8),
+                    _RoleCard(
+                      title: 'Agency',
+                      icon: Icons.people,
+                      isSelected: _selectedRole == AppConstants.roleAgency,
+                      onTap: () => setState(() => _selectedRole = AppConstants.roleAgency),
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                TextFormField(
+                  controller: _nameController,
+                  validator: Validators.validateName,
+                  decoration: const InputDecoration(
+                    labelText: 'Full Name',
+                    prefixIcon: Icon(Icons.person_outlined),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  validator: Validators.validateEmail,
                   decoration: const InputDecoration(
                     labelText: 'Email',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
-                  validator: Validators.email,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  validator: Validators.validatePhone,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number',
+                    prefixIcon: Icon(Icons.phone_outlined),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
+                  validator: Validators.validatePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      ),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  validator: Validators.password,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _confirmPasswordController,
-                  obscureText: _obscureConfirm,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    prefixIcon: const Icon(Icons.lock_outlined),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                    ),
-                  ),
+                  obscureText: _obscureConfirmPassword,
                   validator: (value) {
                     if (value != _passwordController.text) {
                       return 'Passwords do not match';
                     }
-                    return Validators.password(value);
+                    return Validators.validatePassword(value);
                   },
+                  decoration: InputDecoration(
+                    labelText: 'Confirm Password',
+                    prefixIcon: const Icon(Icons.lock_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      ),
+                      onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 Consumer<AuthProvider>(
                   builder: (context, auth, _) {
                     return ElevatedButton(
@@ -164,7 +202,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   children: [
                     const Text('Already have an account?'),
                     TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Sign In'),
                     ),
                   ],
@@ -193,42 +231,33 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-              : Colors.white,
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Colors.grey.shade300,
-            width: isSelected ? 2 : 1,
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : Colors.grey[300]!,
+              width: 2,
+            ),
           ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 40,
-              color: isSelected
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.grey,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.grey.shade700,
+          child: Column(
+            children: [
+              Icon(icon, size: 28, color: isSelected ? Colors.white : Colors.grey[700]),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : Colors.grey[700],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

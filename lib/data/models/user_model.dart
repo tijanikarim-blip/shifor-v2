@@ -1,83 +1,89 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class UserModel {
   final String id;
+  final String name;
   final String email;
+  final String phone;
   final String role;
-  final String? phone;
-  final String? photoUrl;
-  final String? displayName;
-  final bool emailVerified;
-  final bool isActive;
+  final bool isVerified;
+  final bool isEmailVerified;
+  final bool isPhoneVerified;
+  final bool profileCompleted;
   final DateTime createdAt;
-  final DateTime? updatedAt;
+  final String? profileImageUrl;
 
   UserModel({
     required this.id,
+    required this.name,
     required this.email,
+    required this.phone,
     required this.role,
-    this.phone,
-    this.photoUrl,
-    this.displayName,
-    this.emailVerified = false,
-    this.isActive = true,
+    this.isVerified = false,
+    this.isEmailVerified = false,
+    this.isPhoneVerified = false,
+    this.profileCompleted = false,
     required this.createdAt,
-    this.updatedAt,
+    this.profileImageUrl,
   });
 
-  factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory UserModel.fromMap(Map<String, dynamic> map, String id) {
     return UserModel(
-      id: doc.id,
-      email: data['email'] ?? '',
-      role: data['role'] ?? '',
-      phone: data['phone'],
-      photoUrl: data['photoUrl'],
-      displayName: data['displayName'],
-      emailVerified: data['emailVerified'] ?? false,
-      isActive: data['isActive'] ?? true,
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      id: id,
+      name: map['name'] ?? '',
+      email: map['email'] ?? '',
+      phone: map['phone'] ?? '',
+      role: map['role'] ?? '',
+      isVerified: map['isVerified'] ?? false,
+      isEmailVerified: map['isEmailVerified'] ?? false,
+      isPhoneVerified: map['isPhoneVerified'] ?? false,
+      profileCompleted: map['profileCompleted'] ?? false,
+      createdAt: map['createdAt'] != null 
+          ? DateTime.parse(map['createdAt']) 
+          : DateTime.now(),
+      profileImageUrl: map['profileImageUrl'],
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toMap() {
     return {
+      'name': name,
       'email': email,
-      'role': role,
       'phone': phone,
-      'photoUrl': photoUrl,
-      'displayName': displayName,
-      'emailVerified': emailVerified,
-      'isActive': isActive,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+      'role': role,
+      'isVerified': isVerified,
+      'isEmailVerified': isEmailVerified,
+      'isPhoneVerified': isPhoneVerified,
+      'profileCompleted': profileCompleted,
+      'createdAt': createdAt.toIso8601String(),
+      'profileImageUrl': profileImageUrl,
     };
   }
 
   UserModel copyWith({
-    String? id,
+    String? name,
     String? email,
-    String? role,
     String? phone,
-    String? photoUrl,
-    String? displayName,
-    bool? emailVerified,
-    bool? isActive,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    String? role,
+    bool? isVerified,
+    bool? isEmailVerified,
+    bool? isPhoneVerified,
+    bool? profileCompleted,
+    String? profileImageUrl,
   }) {
     return UserModel(
-      id: id ?? this.id,
+      id: id,
+      name: name ?? this.name,
       email: email ?? this.email,
-      role: role ?? this.role,
       phone: phone ?? this.phone,
-      photoUrl: photoUrl ?? this.photoUrl,
-      displayName: displayName ?? this.displayName,
-      emailVerified: emailVerified ?? this.emailVerified,
-      isActive: isActive ?? this.isActive,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      role: role ?? this.role,
+      isVerified: isVerified ?? this.isVerified,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
+      profileCompleted: profileCompleted ?? this.profileCompleted,
+      createdAt: createdAt,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
     );
   }
+
+  bool get isFullyVerified => isEmailVerified && isPhoneVerified;
+  bool get needsProfileCompletion => !profileCompleted;
 }

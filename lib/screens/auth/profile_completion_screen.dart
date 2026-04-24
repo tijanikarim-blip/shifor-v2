@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../providers/auth_provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/utils/validators.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/location_service.dart';
 import '../../services/storage_service.dart';
-import '../home/home_screen.dart';
+import '../../data/repositories/user_repository.dart';
 
 class ProfileCompletionScreen extends StatefulWidget {
   const ProfileCompletionScreen({super.key});
@@ -17,116 +19,154 @@ class ProfileCompletionScreen extends StatefulWidget {
 
 class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _licenseController = TextEditingController();
-  final _vehicleTypeController = TextEditingController();
-  final _plateController = TextEditingController();
-  final _companyNameController = TextEditingController();
-  final _companyDescController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _expController = TextEditingController();
   
-  File? _profilePhoto;
-  File? _licensePhoto;
-  File? _logoPhoto;
+  final _imagePicker = ImagePicker();
+  final _locationService = LocationService();
+  final _storageService = StorageService();
+  final _userRepo = UserRepository();
+  
+  String? _profileImagePath;
+  String? _licenseImagePath;
+  final List<String> _selectedLicenses = [];
+  final List<String> _selectedLanguages = [];
+  String? _currentCity;
+  double _progress = 0;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    _licenseController.dispose();
-    _vehicleTypeController.dispose();
-    _plateController.dispose();
-    _companyNameController.dispose();
-    _companyDescController.dispose();
+    _nameController.dispose();
+    _expController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickImage(bool isProfile) async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        if (isProfile) {
-          _profilePhoto = File(image.path);
-        } else if (isProfile == false && isProfile != true) {
-          _licensePhoto = File(image.path);
-        } else {
-          _logoPhoto = File(image.path);
-        }
-      });
+  void _updateProgress() {
+    double progress = 0;
+    if (_nameController.text.isNotEmpty) progress += 20;
+    if (_selectedLicenses.isNotEmpty) progress += 20;
+    if (_selectedLanguages.isNotEmpty) progress += 20;
+    if (_profileImagePath != null) progress += 20;
+    if (_licenseImagePath != null) progress += 20;
+    setState(() => _progress = progress);
+  }
+
+  Future<File?> _pickProfileImage() async {
+    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery, maxWidth: 800, maxHeight: 800);
+    if (pickedFile != null) {
+      setState(() => _profileImagePath = pickedFile.path);
+      _updateProgress();
     }
+    return pickedFile != null ? File(pickedFile.path) : null;
+  }
+
+  Future<File?> _pickLicenseImage() async {
+    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery, maxWidth: 1200);
+    if (pickedFile != null) {
+      setState(() => _licenseImagePath = pickedFile.path);
+      _updateProgress();
+    }
+    return pickedFile != null ? File(pickedFile.path) : null;
+  }
+
+  Future<void> _getLocation() async {
+    setState(() => _isLoading = true);
+    
+    final result = await _locationService.getCurrentLocation();
+    if (result.isSuccess && result.data != null) {
+      final city = await _locationService.getCityFromCoordinates(
+        result.data!.latitude,
+        result.data!.longitude,
+      );
+      setState(() {
+        _currentCity = city ?? 'Unknown';
+      });
+    } else {
+      setState(() => _currentCity = 'Casablanca, Morocco');
+    }
+    setState(() => _isLoading = false);
+    _updateProgress();
   }
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
+    if (_profileImagePath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload a profile picture')),
+      );
+      return;
+    }
+    if (_selectedLicenses.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one license type')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
-      final authProvider = context.read<AuthProvider>();
-      final storage = StorageService();
-      
-      String? photoUrl;
+      final userId = context.read<AuthProvider>().user?.id;
+      if (userId == null) return;
+
+      String? profileUrl;
       String? licenseUrl;
-      String? logoUrl;
 
-      if (_profilePhoto != null) {
-        photoUrl = await storage.uploadProfilePhoto(_profilePhoto!, authProvider.user!.uid);
+      if (_profileImagePath != null) {
+        profileUrl = await _storageService.uploadProfileImage(userId, File(_profileImagePath!));
       }
-      if (_licensePhoto != null) {
-        licenseUrl = await storage.uploadLicensePhoto(_licensePhoto!, authProvider.user!.uid);
-      }
-      if (_logoPhoto != null) {
-        logoUrl = await storage.uploadCompanyLogo(_logoPhoto!, authProvider.user!.uid);
+      if (_licenseImagePath != null) {
+        licenseUrl = await _storageService.uploadLicenseImage(userId, File(_licenseImagePath!));
       }
 
-      if (authProvider.isDriver) {
-        await authProvider.updateDriverProfile({
-          'firstName': _firstNameController.text,
-          'lastName': _lastNameController.text,
-          'phone': _phoneController.text,
-          'address': _addressController.text,
-          'licenseNumber': _licenseController.text,
-          'vehicleType': _vehicleTypeController.text,
-          'vehiclePlate': _plateController.text,
-          if (photoUrl != null) 'photoUrl': photoUrl,
-          if (licenseUrl != null) 'licensePhotoUrl': licenseUrl,
-          'updatedAt': DateTime.now(),
-        });
-      } else {
-        await authProvider.updateCompanyProfile({
-          'companyName': _companyNameController.text,
-          'description': _companyDescController.text,
-          'phone': _phoneController.text,
-          'address': _addressController.text,
-          if (logoUrl != null) 'logoUrl': logoUrl,
-          'updatedAt': DateTime.now(),
-        });
+      final locResult = await _locationService.getCurrentLocation();
+      double? lat;
+      double? lng;
+      if (locResult.isSuccess && locResult.data != null) {
+        lat = locResult.data!.latitude;
+        lng = locResult.data!.longitude;
+        _currentCity ??= await _locationService.getCityFromCoordinates(lat, lng);
       }
+
+      final driverData = {
+        'driverId': userId,
+        'name': _nameController.text.trim(),
+        'licenses': _selectedLicenses,
+        'experienceYears': int.tryParse(_expController.text) ?? 0,
+        'languages': _selectedLanguages,
+        'isAvailable': false,
+        'latitude': lat,
+        'longitude': lng,
+        'currentCity': _currentCity ?? 'Not set',
+        'profileImageUrl': profileUrl,
+        'licenseImageUrl': licenseUrl,
+        'attestationUrls': [],
+        'verificationStatus': 'pending',
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+
+      await _userRepo.createDriverProfile(userId, driverData);
+      await _userRepo.updateUser(userId, {'profileCompleted': true});
 
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      Navigator.of(context).pushReplacementNamed('/home');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
       );
-    } finally {
-      setState(() => _isLoading = false);
     }
+
+    setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-    final isDriver = authProvider.isDriver;
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isDriver ? 'Complete Driver Profile' : 'Complete Company Profile'),
-      ),
+      appBar: AppBar(title: const Text('Complete Your Profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -134,163 +174,242 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey.shade200,
-                      backgroundImage: _profilePhoto != null ? FileImage(_profilePhoto!) : null,
-                      child: _profilePhoto == null
-                          ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                          : null,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        child: IconButton(
-                          icon: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
-                          onPressed: () => _pickImage(true),
-                        ),
-                      ),
-                    ),
-                  ],
+              _ProgressBar(progress: _progress),
+              const SizedBox(height: 24),
+              
+              // Profile Image
+              _buildProfileImageSection(),
+              const SizedBox(height: 24),
+              
+              // Name
+              TextFormField(
+                controller: _nameController,
+                validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                onChanged: (_) => _updateProgress(),
+                decoration: const InputDecoration(
+                  labelText: 'Full Name',
+                  prefixIcon: Icon(Icons.person),
                 ),
               ),
+              const SizedBox(height: 16),
+              
+              // Experience
+              TextFormField(
+                controller: _expController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Years of Experience',
+                  prefixIcon: Icon(Icons.work),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // License
+              _buildLicenseSection(),
+              const SizedBox(height: 24),
+              
+              // Languages
+              _buildLanguagesSection(),
+              const SizedBox(height: 24),
+              
+              // Location
+              _buildLocationSection(),
               const SizedBox(height: 32),
               
-              if (isDriver) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _firstNameController,
-                        decoration: const InputDecoration(labelText: 'First Name'),
-                        validator: (v) => Validators.required(v, 'First name'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _lastNameController,
-                        decoration: const InputDecoration(labelText: 'Last Name'),
-                        validator: (v) => Validators.required(v, 'Last name'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Phone', prefixIcon: Icon(Icons.phone)),
-                  validator: Validators.phone,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'Address', prefixIcon: Icon(Icons.location_on)),
-                  validator: (v) => Validators.required(v, 'Address'),
-                ),
-                const SizedBox(height: 24),
-                const Text('Vehicle Info', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _vehicleTypeController,
-                  decoration: const InputDecoration(labelText: 'Vehicle Type', prefixIcon: Icon(Icons.directions_car)),
-                  validator: (v) => Validators.required(v, 'Vehicle type'),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _plateController,
-                  decoration: const InputDecoration(labelText: 'License Plate', prefixIcon: Icon(Icons.credit_card)),
-                  validator: (v) => Validators.required(v, 'License plate'),
-                ),
-                const SizedBox(height: 24),
-                const Text('License Photo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: () => _pickImage(false),
-                  child: Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: _licensePhoto != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(_licensePhoto!, fit: BoxFit.cover, width: double.infinity),
-                          )
-                        : const Center(child: Icon(Icons.add_a_photo, size: 40)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _licenseController,
-                  decoration: const InputDecoration(labelText: 'License Number'),
-                  validator: (v) => Validators.required(v, 'License number'),
-                ),
-              ] else ...[
-                TextFormField(
-                  controller: _companyNameController,
-                  decoration: const InputDecoration(labelText: 'Company Name', prefixIcon: Icon(Icons.business)),
-                  validator: (v) => Validators.required(v, 'Company name'),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Phone', prefixIcon: Icon(Icons.phone)),
-                  validator: Validators.phone,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'Address', prefixIcon: Icon(Icons.location_on)),
-                  validator: (v) => Validators.required(v, 'Address'),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _companyDescController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.description)),
-                ),
-                const SizedBox(height: 24),
-                const Text('Company Logo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: () => _pickImage(true),
-                  child: Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: _logoPhoto != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(_logoPhoto!, fit: BoxFit.cover, width: double.infinity),
-                          )
-                        : const Center(child: Icon(Icons.add_a_photo, size: 40)),
-                  ),
-                ),
-              ],
-              
-              const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _isLoading ? null : _saveProfile,
                 child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Save Profile'),
+                    ? const CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
+                    : const Text('Complete Profile'),
               ),
+              const SizedBox(height: 100),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildProfileImageSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Profile Picture *', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _pickProfileImage,
+          child: Container(
+            height: 120,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+              image: _profileImagePath != null
+                  ? DecorationImage(image: FileImage(File(_profileImagePath!)), fit: BoxFit.cover)
+                  : null,
+            ),
+            child: _profileImagePath == null
+                ? const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                        SizedBox(height: 8),
+                        Text('Tap to upload'),
+                      ],
+                    ),
+                  )
+                : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLicenseSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Driver License *', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _pickLicenseImage,
+          child: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: _licenseImagePath != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: Image.file(File(_licenseImagePath!), fit: BoxFit.cover),
+                  )
+                : const Center(
+                    child: Text('Upload License Image', style: TextStyle(color: Colors.grey)),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: AppConstants.licenseTypes.map((license) {
+            final isSelected = _selectedLicenses.contains(license);
+            return FilterChip(
+              label: Text(license),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  selected ? _selectedLicenses.add(license) : _selectedLicenses.remove(license);
+                });
+                _updateProgress();
+              },
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLanguagesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Languages', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: AppConstants.languages.map((lang) {
+            final isSelected = _selectedLanguages.contains(lang);
+            return FilterChip(
+              label: Text(lang),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  selected ? _selectedLanguages.add(lang) : _selectedLanguages.remove(lang);
+                });
+                _updateProgress();
+              },
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Location', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _currentCity == null ? _getLocation : null,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _currentCity != null ? Colors.green : Colors.grey[300]!),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _currentCity != null ? Icons.location_on : Icons.location_searching,
+                  color: _currentCity != null ? Colors.green : Colors.grey,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _currentCity ?? 'Tap to detect location',
+                    style: TextStyle(
+                      color: _currentCity != null ? Colors.black : Colors.grey,
+                    ),
+                  ),
+                ),
+                if (_isLoading) const CircularProgressIndicator(strokeWidth: 2),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProgressBar extends StatelessWidget {
+  final double progress;
+  const _ProgressBar({required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Profile Completion', style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              '${progress.toInt()}%',
+              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: progress / 100,
+            minHeight: 10,
+            backgroundColor: Colors.grey[200],
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+          ),
+        ),
+      ],
     );
   }
 }
