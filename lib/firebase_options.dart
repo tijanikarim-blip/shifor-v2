@@ -11,7 +11,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        return iOS;
+        return ios;
       case TargetPlatform.macOS:
         return macOS;
       case TargetPlatform.windows:
@@ -34,37 +34,37 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: "YOUR_API_KEY",
-    appId: "YOUR_APP_ID",
-    messagingSenderId: "YOUR_SENDER_ID",
-    projectId: "YOUR_PROJECT_ID",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    apiKey: "AIzaSyBVhFVKKg3gFsqYSYqcrvvjgA0qRjKrQ8U",
+    appId: "1:194169244316:web:placeholder",
+    messagingSenderId: "194169244316",
+    projectId: "shifor-385ea",
+    authDomain: "shifor-385ea.firebaseapp.com",
+    storageBucket: "shifor-385ea.firebasestorage.app",
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: "YOUR_API_KEY",
-    appId: "YOUR_APP_ID",
-    messagingSenderId: "YOUR_SENDER_ID",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    apiKey: "AIzaSyBVhFVKKg3gFsqYSYqcrvvjgA0qRjKrQ8U",
+    appId: "1:194169244316:android:3e7a7dede16696499ebb59",
+    messagingSenderId: "194169244316",
+    projectId: "shifor-385ea",
+    storageBucket: "shifor-385ea.firebasestorage.app",
   );
 
   static const FirebaseOptions iOS = FirebaseOptions(
-    apiKey: "YOUR_API_KEY",
-    appId: "YOUR_APP_ID",
-    messagingSenderId: "YOUR_SENDER_ID",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    iosBundleId: "com.example.shifor",
+    apiKey: "AIzaSyBVhFVKKg3gFsqYSYqcrvvjgA0qRjKrQ8U",
+    appId: "1:194169244316:ios:placeholder",
+    messagingSenderId: "194169244316",
+    projectId: "shifor-385ea",
+    storageBucket: "shifor-385ea.firebasestorage.app",
+    iosBundleId: "com.altijan.shifor",
   );
 
   static const FirebaseOptions macOS = FirebaseOptions(
-    apiKey: "YOUR_API_KEY",
-    appId: "YOUR_APP_ID",
-    messagingSenderId: "YOUR_SENDER_ID",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    iosBundleId: "com.example.shifor",
+    apiKey: "AIzaSyBVhFVKKg3gFsqYSYqcrvvjgA0qRjKrQ8U",
+    appId: "1:194169244316:ios:placeholder",
+    messagingSenderId: "194169244316",
+    projectId: "shifor-385ea",
+    storageBucket: "shifor-385ea.firebasestorage.app",
+    iosBundleId: "com.altijan.shifor",
   );
 }
