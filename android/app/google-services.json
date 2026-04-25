@@ -12,7 +12,12 @@
           "package_name": "com.altijan.shifor"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "194169244316-pdo4gm1h89pdu5iipb0hfn4ghf848ba8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBVhFVKKg3gFsqYSYqcrvvjgA0qRjKrQ8U"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "194169244316-pdo4gm1h89pdu5iipb0hfn4ghf848ba8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
