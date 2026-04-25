@@ -10,7 +10,7 @@ class ApplicationRepository {
         .where('driverId', isEqualTo: driverId)
         .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs.map((doc) => ApplicationModel.fromMap(doc.data(), doc.id)).toList();
+    return snapshot.docs.map((doc) => ApplicationModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
   }
 
   Stream<List<ApplicationModel>> getApplicationsByDriverStream(String driverId) {
@@ -18,7 +18,7 @@ class ApplicationRepository {
         .where('driverId', isEqualTo: driverId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => ApplicationModel.fromMap(doc.data(), doc.id)).toList());
+        .map((snapshot) => snapshot.docs.map((doc) => ApplicationModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList());
   }
 
   Future<List<ApplicationModel>> getApplicationsByJob(String jobId) async {
@@ -26,7 +26,7 @@ class ApplicationRepository {
         .where('jobId', isEqualTo: jobId)
         .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs.map((doc) => ApplicationModel.fromMap(doc.data(), doc.id)).toList();
+    return snapshot.docs.map((doc) => ApplicationModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
   }
 
   Stream<List<ApplicationModel>> getApplicationsByJobStream(String jobId) {
@@ -34,7 +34,7 @@ class ApplicationRepository {
         .where('jobId', isEqualTo: jobId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => ApplicationModel.fromMap(doc.data(), doc.id)).toList());
+        .map((snapshot) => snapshot.docs.map((doc) => ApplicationModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList());
   }
 
   Future<String> createApplication(Map<String, dynamic> data) async {

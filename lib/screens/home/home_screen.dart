@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../data/models/user_model.dart';
-import 'jobs/jobs_screen.dart';
-import 'applications/applications_screen.dart';
-import 'messages/messages_screen.dart';
-import 'profile/profile_screen.dart';
+import '../jobs/jobs_screen.dart';
+import '../applications/applications_screen.dart';
+import '../messages/messages_screen.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

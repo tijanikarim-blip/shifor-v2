@@ -26,17 +26,27 @@ import 'screens/applications/applications_screen.dart';
 import 'screens/messages/messages_screen.dart';
 import 'screens/profile/profile_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
+bool _firebaseInitialized = false;
+
+Future<void> initFirebase() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    _firebaseInitialized = true;
   } catch (e) {
-    debugPrint('Firebase init failed: $e');
+    debugPrint('Firebase init failed (google-services.json missing?): $e');
+    _firebaseInitialized = false;
   }
+}
+
+bool get isFirebaseInitialized => _firebaseInitialized;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   
+await initFirebase();
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../main.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,7 +19,40 @@ class _SplashScreenState extends State<SplashScreen> {
   void _navigateAfterDelay() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
+    
+    if (!isFirebaseInitialized) {
+      _showFirebaseError();
+      return;
+    }
+    
     Navigator.of(context).pushReplacementNamed('/sign-in');
+  }
+
+  void _showFirebaseError() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Configuration Error'),
+        content: const Text(
+          'Firebase is not configured.\n\n'
+          'To fix this:\n'
+          '1. Go to Firebase Console\n'
+          '2. Create/download google-services.json\n'
+          '3. Place it in android/app/\n'
+          '4. Rebuild the app',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).pushReplacementNamed('/sign-in');
+            },
+            child: const Text('Continue Anyway (Demo)'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

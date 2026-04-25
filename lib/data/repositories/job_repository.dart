@@ -11,7 +11,7 @@ class JobRepository {
         .orderBy('createdAt', descending: true)
         .limit(limit)
         .get();
-    return snapshot.docs.map((doc) => JobModel.fromMap(doc.data(), doc.id)).toList();
+    return snapshot.docs.map((doc) => JobModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
   }
 
   Stream<List<JobModel>> getJobsStream({int limit = 20}) {
@@ -20,7 +20,7 @@ class JobRepository {
         .orderBy('createdAt', descending: true)
         .limit(limit)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => JobModel.fromMap(doc.data(), doc.id)).toList());
+        .map((snapshot) => snapshot.docs.map((doc) => JobModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList());
   }
 
   Future<JobModel?> getJob(String jobId) async {
@@ -41,7 +41,7 @@ class JobRepository {
         .where('companyId', isEqualTo: companyId)
         .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs.map((doc) => JobModel.fromMap(doc.data(), doc.id)).toList();
+    return snapshot.docs.map((doc) => JobModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
   }
 
   Future<List<JobModel>> getJobsByCountry(String country) async {
@@ -50,7 +50,7 @@ class JobRepository {
         .where('isActive', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs.map((doc) => JobModel.fromMap(doc.data(), doc.id)).toList();
+    return snapshot.docs.map((doc) => JobModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
   }
 
   Future<String> createJob(Map<String, dynamic> data) async {
