@@ -26,7 +26,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Text(user?.name ?? 'Driver', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)), child: Text(user?.role?.toUpperCase() ?? 'DRIVER', style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600))),
+            Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)), child: Text((user?.role ?? 'DRIVER').toUpperCase(), style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600))),
           ])),
           const SizedBox(height: 32),
           _MenuItem(Icons.person_outline, 'Edit Profile', () {}),

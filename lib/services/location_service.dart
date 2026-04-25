@@ -32,7 +32,7 @@ class LocationService {
         return LocationResult.failure('Location permission permanently denied');
       }
 
-      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final position = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
       return LocationResult.success(position);
     } catch (e) {
       return LocationResult.failure('Failed to get location: $e');
