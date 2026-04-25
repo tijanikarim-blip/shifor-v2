@@ -51,6 +51,23 @@ class AuthProvider extends ChangeNotifier {
     return result.isSuccess;
   }
 
+  Future<bool> signInWithGoogle() async {
+    _setLoading(true);
+    _error = null;
+    
+    final result = await _authService.signInWithGoogle();
+    
+    if (result.isSuccess) {
+      _user = result.data;
+      _status = AuthStatus.authenticated;
+    } else {
+      _error = result.error;
+    }
+    
+    _setLoading(false);
+    return result.isSuccess;
+  }
+
   Future<bool> signUp({
     required String email,
     required String password,

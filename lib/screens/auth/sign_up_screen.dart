@@ -60,6 +60,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.signInWithGoogle();
+
+    if (!mounted) return;
+
+    if (success) {
+      final user = authProvider.user;
+      if (user != null && !user.profileCompleted) {
+        Navigator.of(context).pushReplacementNamed('/profile-completion');
+      } else {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authProvider.error ?? 'Google sign in failed'), backgroundColor: AppColors.error),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,6 +117,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 TextFormField(controller: _confirmPasswordController, obscureText: _obscureConfirmPassword, validator: (v) => v != _passwordController.text ? 'Passwords do not match' : Validators.validatePassword(v), decoration: InputDecoration(labelText: 'Confirm Password', prefixIcon: const Icon(Icons.lock_outlined), suffixIcon: IconButton(icon: Icon(_obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined), onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword)))),
                 const SizedBox(height: 24),
                 Consumer<AuthProvider>(builder: (context, auth, _) => ElevatedButton(onPressed: auth.isLoading ? null : _signUp, child: auth.isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create Account'))),
+                const SizedBox(height: 24),
+                const Row(children: [
+                  Expanded(child: Divider()),
+                  Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Or sign up with', style: TextStyle(color: AppColors.textSecondary))),
+                  Expanded(child: Divider()),
+                ]),
+                const SizedBox(height: 24),
+                OutlinedButton(
+                  onPressed: _signInWithGoogle,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: AppColors.divider),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    const Icon(Icons.g_mobiledata, size: 24),
+                    const SizedBox(width: 12),
+                    const Text('Sign up with Google'),
+                  ]),
+                ),
                 const SizedBox(height: 16),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('Already have an account?'), TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Sign In'))]),
               ],

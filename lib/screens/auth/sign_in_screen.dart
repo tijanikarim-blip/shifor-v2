@@ -49,6 +49,26 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.signInWithGoogle();
+
+    if (!mounted) return;
+
+    if (success) {
+      final user = authProvider.user;
+      if (user != null && !user.profileCompleted) {
+        Navigator.of(context).pushReplacementNamed('/profile-completion');
+      } else {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authProvider.error ?? 'Google sign in failed'), backgroundColor: AppColors.error),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,6 +121,26 @@ class _SignInScreenState extends State<SignInScreen> {
                   const Text("Don't have an account?"),
                   TextButton(onPressed: () => Navigator.of(context).pushNamed('/sign-up'), child: const Text('Sign Up')),
                 ]),
+                const SizedBox(height: 32),
+                const Row(children: [
+                  Expanded(child: Divider()),
+                  Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Or continue with', style: TextStyle(color: AppColors.textSecondary))),
+                  Expanded(child: Divider()),
+                ]),
+                const SizedBox(height: 24),
+                OutlinedButton(
+                  onPressed: _signInWithGoogle,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: AppColors.divider),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Image.asset('assets/google_icon.png', height: 24, width: 24, errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, size: 24)),
+                    const SizedBox(width: 12),
+                    const Text('Continue with Google'),
+                  ]),
+                ),
               ],
             ),
           ),
