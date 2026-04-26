@@ -20,11 +20,6 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     
-    if (!isFirebaseInitialized) {
-      _showFirebaseError();
-      return;
-    }
-    
     Navigator.of(context).pushReplacementNamed('/sign-in');
   }
 

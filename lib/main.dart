@@ -34,8 +34,9 @@ Future<void> initFirebase() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     _firebaseInitialized = true;
+    debugPrint('Firebase initialized successfully');
   } catch (e) {
-    debugPrint('Firebase init failed (google-services.json missing?): $e');
+    debugPrint('Firebase init error: $e');
     _firebaseInitialized = false;
   }
 }
