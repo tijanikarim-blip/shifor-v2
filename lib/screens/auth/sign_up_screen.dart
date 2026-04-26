@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../services/local_auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/utils/validators.dart';
@@ -22,6 +21,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String _selectedRole = '';
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -40,22 +40,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.signUp(
+    setState(() => _isLoading = true);
+
+    final success = await LocalAuth.signUp(
+      name: _nameController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text,
-      name: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
       role: _selectedRole,
     );
 
+    setState(() => _isLoading = false);
+
     if (!mounted) return;
 
     if (success) {
-      Navigator.of(context).pushReplacementNamed('/verification');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account created! Go to sign in.'), backgroundColor: AppColors.success),
+      );
+      Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authProvider.error ?? 'Sign up failed'), backgroundColor: AppColors.error),
+        const SnackBar(content: Text('Email already exists'), backgroundColor: AppColors.error),
       );
     }
   }
@@ -96,7 +102,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 16),
                 TextFormField(controller: _confirmPasswordController, obscureText: _obscureConfirmPassword, validator: (v) => v != _passwordController.text ? 'Passwords do not match' : Validators.validatePassword(v), decoration: InputDecoration(labelText: 'Confirm Password', prefixIcon: const Icon(Icons.lock_outlined), suffixIcon: IconButton(icon: Icon(_obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined), onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword)))),
                 const SizedBox(height: 24),
-                Consumer<AuthProvider>(builder: (context, auth, _) => ElevatedButton(onPressed: auth.isLoading ? null : _signUp, child: auth.isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create Account'))),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _signUp,
+                  child: _isLoading 
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Create Account')
+                ),
                 const SizedBox(height: 16),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('Already have an account?'), TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Sign In'))]),
               ],

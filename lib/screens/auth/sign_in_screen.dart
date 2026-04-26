@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../services/local_auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
 
@@ -16,6 +15,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -27,24 +27,22 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.signIn(
-      _emailController.text.trim(),
-      _passwordController.text,
+    setState(() => _isLoading = true);
+
+    final user = await LocalAuth.signIn(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
     );
+
+    setState(() => _isLoading = false);
 
     if (!mounted) return;
 
-    if (success) {
-      final user = authProvider.user;
-      if (user != null && !user.profileCompleted) {
-        Navigator.of(context).pushReplacementNamed('/profile-completion');
-      } else {
-        Navigator.of(context).pushReplacementNamed('/home');
-      }
+    if (user != null) {
+      Navigator.of(context).pushReplacementNamed('/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authProvider.error ?? 'Sign in failed'), backgroundColor: AppColors.error),
+        const SnackBar(content: Text('Invalid email or password'), backgroundColor: AppColors.error),
       );
     }
   }
@@ -88,13 +86,11 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Consumer<AuthProvider>(
-                  builder: (context, auth, _) {
-                    return ElevatedButton(
-                      onPressed: auth.isLoading ? null : _signIn,
-                      child: auth.isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Sign In'),
-                    );
-                  },
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _signIn,
+                  child: _isLoading 
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Sign In')
                 ),
                 const SizedBox(height: 16),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
