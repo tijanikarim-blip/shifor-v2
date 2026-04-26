@@ -1,11 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart' as auth;
-import 'package:google_sign_in/google_sign_in.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/user_repository.dart';
 
 class AuthService {
   final auth.FirebaseAuth _firebaseAuth = auth.FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final UserRepository _userRepository = UserRepository();
 
   Stream<UserModel?> get authStateChanges {
@@ -52,52 +50,6 @@ class AuthService {
       return AuthResult.failure(_getAuthErrorMessage(e.code));
     } catch (e) {
       return AuthResult.failure('Sign in failed. Please try again.');
-    }
-  }
-
-  Future<AuthResult<UserModel>> signInWithGoogle() async {
-    try {
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        return AuthResult.failure('Google sign in cancelled');
-      }
-
-      final googleAuth = await googleUser.authentication;
-      final credential = auth.GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final userCredential = await _firebaseAuth.signInWithCredential(credential);
-      
-      if (userCredential.user == null) {
-        return AuthResult.failure('Sign in failed');
-      }
-
-      final firebaseUser = userCredential.user!;
-      
-      final existingUser = await _userRepository.getUser(firebaseUser.uid);
-      if (existingUser != null) {
-        return AuthResult.success(existingUser);
-      }
-
-      final userData = {
-        'name': firebaseUser.displayName ?? '',
-        'email': firebaseUser.email ?? '',
-        'phone': firebaseUser.phoneNumber ?? '',
-        'role': 'driver',
-        'isVerified': firebaseUser.emailVerified,
-        'isEmailVerified': firebaseUser.emailVerified,
-        'isPhoneVerified': false,
-        'profileCompleted': false,
-        'createdAt': DateTime.now().toIso8601String(),
-      };
-      
-      await _userRepository.createUser(firebaseUser.uid, userData);
-      final user = await _userRepository.getUser(firebaseUser.uid);
-      return AuthResult.success(user!);
-    } catch (e) {
-      return AuthResult.failure('Google sign in failed. Please try again.');
     }
   }
 
