@@ -45,7 +45,11 @@ bool get isFirebaseInitialized => _firebaseInitialized;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-await initFirebase();
+  try {
+    await initFirebase();
+  } catch (e) {
+    debugPrint('Firebase init error: $e');
+  }
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
