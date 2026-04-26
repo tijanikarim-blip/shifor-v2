@@ -1,4 +1,4 @@
-package com.example.shifor
+package com.altijan.shifor
 
 import io.flutter.embedding.android.FlutterActivity
 
